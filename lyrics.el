@@ -283,8 +283,8 @@ Callback AZLyrics ARTIST SONG in BUFFER."
 (defun lyrics-musixmatch (artist song &optional buffer)
   "Process lyrics for ARTIST SONG in BUFFER using AZLyrics."
   (let ((url (format "https://www.musixmatch.com/lyrics/%s/%s"
-                     (replace-regexp-in-string "[[:space:]]+" "-" (replace-regexp-in-string "-" "" artist))
-                     (replace-regexp-in-string "[[:space:]]+" "-" (replace-regexp-in-string "-" "" song)))))
+                     (replace-regexp-in-string "['[:space:]]+" "-" (replace-regexp-in-string "[.-]" " " artist))
+                     (replace-regexp-in-string "['[:space:]]+" "-" (replace-regexp-in-string "[.-]" " " song)))))
     (url-retrieve url #'lyrics-musixmatch-page-callback (list artist song buffer))))
 
 (defun lyrics-musixmatch-page-callback (status artist song &optional buffer)
