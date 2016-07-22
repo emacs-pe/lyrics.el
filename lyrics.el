@@ -111,6 +111,9 @@ the lyrics."
 (defvar lyrics-newlines-separator 1)
 
 (defconst lyrics-node-tag-ignore '(comment script))
+
+(define-error 'lyrics-error "Unknown lyrics error")
+(define-error 'lyrics-backend-error "Lyrics backend error" 'lyrics-error)
 
 (defun lyrics-capitalize (string)
   "Capitalize a STRING."
@@ -227,7 +230,9 @@ Callback lyrics wiki ARTIST SONG in BUFFER."
       (message (error-message-string (plist-get status :error)))
     (let* ((tree (with-current-buffer (current-buffer)
                    (goto-char url-http-end-of-headers)
-                   (libxml-parse-xml-region (1+ (point)) (point-max))))
+                   (if (fboundp 'libxml-parse-xml-region)
+                       (libxml-parse-xml-region (1+ (point)) (point-max))
+                     (signal 'lyrics-error '("This backend requires Emacs to be compiled with xml support")))))
            (lyrics (cadr (assoc-default 'lyrics (cddr tree))))
            (lyrics-url (cadr (assoc-default 'url (cddr tree)))))
       (if (string= lyrics "Not found")
@@ -241,7 +246,9 @@ Callback lyrics wiki ARTIST SONG in BUFFER."
                           (message (error-message-string (plist-get status :error)))
                         (let* ((dom (with-current-buffer (current-buffer)
                                       (goto-char url-http-end-of-headers)
-                                      (libxml-parse-html-region (1+ (point)) (point-max))))
+                                      (if (fboundp 'libxml-parse-html-region)
+                                          (libxml-parse-html-region (1+ (point)) (point-max))
+                                        (signal 'lyrics-error '("This backend requires Emacs to be compiled with xml support"))))
                                (node (dom-by-class dom "lyricbox"))
                                (lyrics (string-trim (lyrics-clean-blank-lines (lyrics-node-texts node "\n")))))
                           (lyrics-show artist song lyrics buffer 'save))))))
@@ -265,7 +272,9 @@ Callback AZLyrics ARTIST SONG in BUFFER."
       (message (error-message-string (plist-get status :error)))
     (let* ((dom (with-current-buffer (current-buffer)
                   (goto-char url-http-end-of-headers)
-                  (libxml-parse-html-region (1+ (point)) (point-max))))
+                  (if (fboundp 'libxml-parse-html-region)
+                      (libxml-parse-html-region (1+ (point)) (point-max))
+                    (signal 'lyrics-error '("This backend requires Emacs to be compiled with xml support")))))
            (node (seq-find (lambda (node)
                              ;; XXX: text from the first 'div' node which
                              ;; doesn't have any attribute
@@ -295,7 +304,9 @@ Callback AZLyrics ARTIST SONG in BUFFER."
       (message (error-message-string (plist-get status :error)))
     (let* ((dom (with-current-buffer (current-buffer)
                   (goto-char url-http-end-of-headers)
-                  (libxml-parse-html-region (1+ (point)) (point-max))))
+                  (if (fboundp 'libxml-parse-html-region)
+                      (libxml-parse-html-region (1+ (point)) (point-max))
+                    (signal 'lyrics-error '("This backend requires Emacs to be compiled with xml support")))))
            (nodes (dom-by-class dom "mxm-lyrics__content"))
            (lyrics (string-trim (string-join (mapcar #'lyrics-node-texts nodes) "\n\n"))))
       (lyrics-show artist song lyrics buffer 'save))))
