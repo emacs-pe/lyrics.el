@@ -291,10 +291,14 @@ Callback AZLyrics ARTIST SONG in BUFFER."
 
 (defun lyrics-musixmatch (artist song &optional buffer)
   "Process lyrics for ARTIST SONG in BUFFER using AZLyrics."
-  (let ((url (format "https://www.musixmatch.com/lyrics/%s/%s"
-                     (replace-regexp-in-string "['[:space:]]+" "-" (replace-regexp-in-string "[.-]" " " artist))
-                     (replace-regexp-in-string "['[:space:]]+" "-" (replace-regexp-in-string "[.-]" " " song)))))
-    (url-retrieve url #'lyrics-musixmatch-page-callback (list artist song buffer))))
+  (url-retrieve (lyrics-musixmatch-url artist song) #'lyrics-musixmatch-page-callback (list artist song buffer)))
+
+(defun lyrics-musixmatch-url (artist song)
+  "Return an url for ARTIST SONG."
+  (cl-labels ((cleanup (string)
+                       ;; XXX: not "[[:punct:]]" because there are characters should transform to "-"
+                       (replace-regexp-in-string "['/[:space:]]+" "-" (string-trim (replace-regexp-in-string "[].,:+!?&()[-]" " " string)))))
+    (format "https://www.musixmatch.com/lyrics/%s/%s" (cleanup artist) (cleanup song))))
 
 (defun lyrics-musixmatch-page-callback (status artist song &optional buffer)
   "Check if STATUS is erred.

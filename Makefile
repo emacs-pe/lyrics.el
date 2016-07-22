@@ -12,11 +12,14 @@ PKGDIR := $(shell EMACS=$(EMACS) $(CASK) package-directory)
 SRCS := $(shell EMACS=$(EMACS) $(CASK) files)
 OBJS  = $(SRCS:.el=.elc)
 
-.PHONY: all compile clean
+.PHONY: all compile test clean
 
 all: compile README.md
 
 compile: $(OBJS)
+
+test:
+	$(CASK) exec $(EMACSBATCH) -L . -l lyrics-test.el -f ert-run-tests-batch-and-exit
 
 clean:
 	$(RM) $(OBJS)
