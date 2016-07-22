@@ -248,7 +248,7 @@ Callback lyrics wiki ARTIST SONG in BUFFER."
                                       (goto-char url-http-end-of-headers)
                                       (if (fboundp 'libxml-parse-html-region)
                                           (libxml-parse-html-region (1+ (point)) (point-max))
-                                        (signal 'lyrics-error '("This backend requires Emacs to be compiled with xml support"))))
+                                        (signal 'lyrics-error '("This backend requires Emacs to be compiled with xml support")))))
                                (node (dom-by-class dom "lyricbox"))
                                (lyrics (string-trim (lyrics-clean-blank-lines (lyrics-node-texts node "\n")))))
                           (lyrics-show artist song lyrics buffer 'save))))))
