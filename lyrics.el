@@ -209,6 +209,7 @@ which are the arguments that `revert-buffer' received."
 (defvar lyrics-show-mode-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map special-mode-map)
+    (define-key map (kbd "e") #'lyrics-edit)
     (define-key map (kbd "j") #'next-line)
     (define-key map (kbd "k") #'previous-line)
     (define-key map (kbd "/") #'isearch-forward)
@@ -327,6 +328,15 @@ Callback AZLyrics ARTIST SONG in BUFFER."
         (lyrics-show artist song lyrics buffer 'save)))))
 
 
+;;;###autoload
+(defun lyrics-edit (artist song)
+  "Edit ARTIST SONG LYRICS in `lyrics-directory'."
+  (interactive (if (and (not current-prefix-arg) lyrics-artist lyrics-song)
+                   (list lyrics-artist lyrics-song)
+                 (list (read-string "Artist: " lyrics-artist 'lyrics-artist-history)
+                       (read-string "Song: " lyrics-song 'lyrics-song-history))))
+  (find-file (lyrics-cache-filename artist song)))
+
 ;;;###autoload
 (defun lyrics (artist song &optional buffer)
   "Browse lyrics wiki from ARTIST SONG in BUFFER."
