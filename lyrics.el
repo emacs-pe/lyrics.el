@@ -151,6 +151,22 @@ Similar to `dom-texts' but ignores `lyrics-node-tag-ignore' tags."
                 (dom-children node))
                (or separator " ")))
 
+(defun lyrics-url-retrieve-parse-xml (buffer)
+  "Return the parsed xml from a `url-retrieve' BUFFER response body."
+  (with-current-buffer buffer
+    (goto-char url-http-end-of-headers)
+    (if (fboundp 'libxml-parse-xml-region)
+        (libxml-parse-xml-region (1+ (point)) (point-max))
+      (signal 'lyrics-error '("Emacs without xml support")))))
+
+(defun lyrics-url-retrieve-parse-html (buffer)
+  "Return the parsed html from a `url-retrieve' BUFFER response body."
+  (with-current-buffer buffer
+    (goto-char url-http-end-of-headers)
+    (if (fboundp 'libxml-parse-html-region)
+        (libxml-parse-html-region (1+ (point)) (point-max))
+      (signal 'lyrics-error '("Emacs without xml support")))))
+
 (defun lyrics-save (artist song lyrics)
   "Save ARTIST SONG LYRICS in `lyrics-directory'."
   (condition-case err
@@ -230,11 +246,7 @@ which are the arguments that `revert-buffer' received."
 Callback lyrics wiki ARTIST SONG in BUFFER."
   (if (plist-get status :error)
       (message (error-message-string (plist-get status :error)))
-    (let* ((tree (with-current-buffer (current-buffer)
-                   (goto-char url-http-end-of-headers)
-                   (if (fboundp 'libxml-parse-xml-region)
-                       (libxml-parse-xml-region (1+ (point)) (point-max))
-                     (signal 'lyrics-error '("This backend requires Emacs to be compiled with xml support")))))
+    (let* ((tree (lyrics-url-retrieve-parse-xml (current-buffer)))
            (lyrics (cadr (assoc-default 'lyrics (cddr tree))))
            (lyrics-url (cadr (assoc-default 'url (cddr tree)))))
       (if (string= lyrics "Not found")
@@ -246,11 +258,7 @@ Callback lyrics wiki ARTIST SONG in BUFFER."
   (url-retrieve url (lambda (status)
                       (if (plist-get status :error)
                           (message (error-message-string (plist-get status :error)))
-                        (let* ((dom (with-current-buffer (current-buffer)
-                                      (goto-char url-http-end-of-headers)
-                                      (if (fboundp 'libxml-parse-html-region)
-                                          (libxml-parse-html-region (1+ (point)) (point-max))
-                                        (signal 'lyrics-error '("This backend requires Emacs to be compiled with xml support")))))
+                        (let* ((dom (lyrics-url-retrieve-parse-html (current-buffer)))
                                (node (dom-by-class dom "lyricbox"))
                                (lyrics (string-trim (lyrics-clean-blank-lines (lyrics-node-texts node "\n")))))
                           (lyrics-show artist song lyrics buffer 'save))))))
@@ -277,11 +285,7 @@ Callback AZLyrics ARTIST SONG in BUFFER."
       (if (= url-http-response-status 404)
           (signal 'lyrics-not-found (list artist song))
         (message (error-message-string err)))
-    (let* ((dom (with-current-buffer (current-buffer)
-                  (goto-char url-http-end-of-headers)
-                  (if (fboundp 'libxml-parse-html-region)
-                      (libxml-parse-html-region (1+ (point)) (point-max))
-                    (signal 'lyrics-error '("This backend requires Emacs to be compiled with xml support")))))
+    (let* ((dom (lyrics-url-retrieve-parse-html (current-buffer)))
            (node (seq-find (lambda (node)
                              ;; XXX: text from the first 'div' node which
                              ;; doesn't have any attribute
@@ -315,11 +319,7 @@ Callback AZLyrics ARTIST SONG in BUFFER."
       (if (= url-http-response-status 404)
           (signal 'lyrics-not-found (list artist song))
         (message (error-message-string err)))
-    (let* ((dom (with-current-buffer (current-buffer)
-                  (goto-char url-http-end-of-headers)
-                  (if (fboundp 'libxml-parse-html-region)
-                      (libxml-parse-html-region (1+ (point)) (point-max))
-                    (signal 'lyrics-error '("This backend requires Emacs to be compiled with xml support")))))
+    (let* ((dom (lyrics-url-retrieve-parse-html (current-buffer)))
            (nodes (dom-by-class dom "mxm-lyrics__content"))
            (lyrics (string-trim (string-join (mapcar #'lyrics-node-texts nodes) "\n\n"))))
       (if (string-blank-p lyrics)
