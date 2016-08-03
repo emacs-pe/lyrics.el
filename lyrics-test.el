@@ -37,6 +37,12 @@
 
 (require 'lyrics)
 
+(ert-deftest lyrics-azlyrics-url-test ()
+  (should (equal (lyrics-azlyrics-url "King Crimson" "Epitaph")
+                 "http://www.azlyrics.com/lyrics/kingcrimson/epitaph.html"))
+  (should (equal (lyrics-azlyrics-url "Muse" "Exogenesis: Symphony Part 3 [Redemption]")
+                 "http://www.azlyrics.com/lyrics/muse/exogenesissymphonypart3redemption.html")))
+
 (ert-deftest lyrics-musixmatch-url-test ()
   (should (equal (lyrics-musixmatch-url "King Crimson" "Epitaph")
                  "https://www.musixmatch.com/lyrics/King-Crimson/Epitaph"))

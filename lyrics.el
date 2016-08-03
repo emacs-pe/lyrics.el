@@ -261,10 +261,13 @@ Callback lyrics wiki ARTIST SONG in BUFFER."
 
 (defun lyrics-azlyrics (artist song &optional buffer)
   "Process lyrics for ARTIST SONG in BUFFER using AZLyrics."
-  (let ((url (format "http://www.azlyrics.com/lyrics/%s/%s.html"
-                     (downcase (replace-regexp-in-string "[[:space:]]+" "" artist))
-                     (downcase (replace-regexp-in-string "[[:space:]]+" "" song)))))
-    (url-retrieve url #'lyrics-azlyrics-page-callback (list artist song buffer))))
+  (url-retrieve (lyrics-azlyrics-url artist song) #'lyrics-azlyrics-page-callback (list artist song buffer)))
+
+(defun lyrics-azlyrics-url (artist song)
+  "Return an AZLyrics url for ARTIST SONG."
+  (cl-labels ((cleanup (string)
+                       (downcase (replace-regexp-in-string "[[:space:][:punct:]]+" "" string))))
+    (format "http://www.azlyrics.com/lyrics/%s/%s.html" (cleanup artist) (cleanup song))))
 
 (defun lyrics-azlyrics-page-callback (status artist song &optional buffer)
   "Check if STATUS is erred.
