@@ -18,7 +18,7 @@ all: compile README.md
 
 compile: $(OBJS)
 
-test:
+test: clean
 	$(CASK) exec $(EMACSBATCH) -L . -l lyrics-test.el -f ert-run-tests-batch-and-exit
 
 clean:

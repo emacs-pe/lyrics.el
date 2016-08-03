@@ -30,12 +30,12 @@
 ;; The unit test suite of `lyrics.el'
 
 ;;; Code:
+(declare-function undercover "undercover")
+
+(when (require 'undercover nil 'no-error)
+  (undercover "lyrics.el"))
 
 (require 'lyrics)
-(require 'undercover nil t)
-
-(when (fboundp 'undercover)
-  (undercover "lyrics.el"))
 
 (ert-deftest lyrics-musixmatch-url-test ()
   (should (equal (lyrics-musixmatch-url "King Crimson" "Epitaph")
