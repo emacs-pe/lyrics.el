@@ -37,7 +37,8 @@
 (eval-when-compile
   (require 'cl-lib)
   (require 'subr-x)
-  (defvar url-http-end-of-headers))
+  (defvar url-http-end-of-headers)
+  (defvar url-http-response-status))
 
 (require 'dom)
 (require 'seq)
@@ -113,6 +114,7 @@ the lyrics."
 (defconst lyrics-node-tag-ignore '(comment script))
 
 (define-error 'lyrics-error "Unknown lyrics error")
+(define-error 'lyrics-not-found "Lyrics not found" 'lyrics-error)
 (define-error 'lyrics-backend-error "Lyrics backend error" 'lyrics-error)
 
 (defun lyrics-capitalize (string)
@@ -236,7 +238,7 @@ Callback lyrics wiki ARTIST SONG in BUFFER."
            (lyrics (cadr (assoc-default 'lyrics (cddr tree))))
            (lyrics-url (cadr (assoc-default 'url (cddr tree)))))
       (if (string= lyrics "Not found")
-          (message "Not lyrics found for: %s - %s" artist song)
+          (signal 'lyrics-not-found (list artist song))
         (lyrics-lyricswiki-extract lyrics-url artist song buffer)))))
 
 (defun lyrics-lyricswiki-extract (url artist song &optional buffer)
@@ -268,8 +270,10 @@ Callback lyrics wiki ARTIST SONG in BUFFER."
   "Check if STATUS is erred.
 
 Callback AZLyrics ARTIST SONG in BUFFER."
-  (if (plist-get status :error)
-      (message (error-message-string (plist-get status :error)))
+  (if-let (err (plist-get status :error))
+      (if (= url-http-response-status 404)
+          (signal 'lyrics-not-found (list artist song))
+        (message (error-message-string err)))
     (let* ((dom (with-current-buffer (current-buffer)
                   (goto-char url-http-end-of-headers)
                   (if (fboundp 'libxml-parse-html-region)
@@ -304,8 +308,10 @@ Callback AZLyrics ARTIST SONG in BUFFER."
   "Check if STATUS is erred.
 
 Callback AZLyrics ARTIST SONG in BUFFER."
-  (if (plist-get status :error)
-      (message (error-message-string (plist-get status :error)))
+  (if-let (err (plist-get status :error))
+      (if (= url-http-response-status 404)
+          (signal 'lyrics-not-found (list artist song))
+        (message (error-message-string err)))
     (let* ((dom (with-current-buffer (current-buffer)
                   (goto-char url-http-end-of-headers)
                   (if (fboundp 'libxml-parse-html-region)
@@ -313,7 +319,9 @@ Callback AZLyrics ARTIST SONG in BUFFER."
                     (signal 'lyrics-error '("This backend requires Emacs to be compiled with xml support")))))
            (nodes (dom-by-class dom "mxm-lyrics__content"))
            (lyrics (string-trim (string-join (mapcar #'lyrics-node-texts nodes) "\n\n"))))
-      (lyrics-show artist song lyrics buffer 'save))))
+      (if (string-blank-p lyrics)
+          (signal 'lyrics-not-found (list artist song))
+        (lyrics-show artist song lyrics buffer 'save)))))
 
 
 ;;;###autoload
