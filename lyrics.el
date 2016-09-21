@@ -6,7 +6,7 @@
 ;; URL: https://github.com/emacs-pe/lyrics.el
 ;; Keywords: convenience
 ;; Version: 0.0.1
-;; Package-Requires: ((emacs "25") (seq "2.15"))
+;; Package-Requires: ((emacs "25.1") (seq "2.15"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -31,7 +31,16 @@
 ;;
 ;; Usage:
 ;;
+;; Add `lyrics.el' somewhere in your `load-path'
+;;
 ;;     M-x lyrics
+;;
+;; Troubleshooting:
+;;
+;; + `musixmatch' backend shows a incomplete lyrics
+;;
+;;   MusixMatch filters requests with an unknown User-Agent header.  Be sure to
+;;   check that `url-privacy-level' is not set to "'paranoid".
 
 ;;; Code:
 (eval-when-compile
