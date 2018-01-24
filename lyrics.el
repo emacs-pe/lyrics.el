@@ -79,17 +79,16 @@ Normalization is only applied when `lyrics' is called interactively."
   :type 'function
   :group 'lyrics)
 
-(defvar lyrics-backends nil)
-
 (defcustom lyrics-backend 'lyrics-lyricswiki
   "Function used to get lyrics.
 
 This function should receive three parameters: Artist, Song,
 Buffer \(optional\), and ultimately call `lyrics-show' to show
 the lyrics."
-  :type 'function
-  :type (append '(choice)
-                (mapcar (lambda (x) (list 'const :tag (car x) (cdr x))) lyrics-backends))
+  :type '(radio (function-item lyrics-azlyrics)
+                (function-item lyrics-lyricswiki)
+                (function-item lyrics-musixmatch)
+                (function :tag "Function"))
   :group 'lyrics)
 
 (defface lyrics-face-song
@@ -239,8 +238,6 @@ which are the arguments that `revert-buffer' received."
 
 
 ;;; Lyrics wiki
-(add-to-list 'lyrics-backends '("Lyrics Wiki" . lyrics-lyricswiki))
-
 (defun lyrics-lyricswiki (artist song &optional buffer)
   "Process lyrics for ARTIST SONG in BUFFER."
   (let ((url (concat "http://lyrics.wikia.com/api.php"
@@ -275,8 +272,6 @@ Callback lyrics wiki ARTIST SONG in BUFFER."
 
 
 ;;; AZLyrics
-(add-to-list 'lyrics-backends '("AZLyrics" . lyrics-azlyrics))
-
 (defun lyrics-azlyrics (artist song &optional buffer)
   "Process lyrics for ARTIST SONG in BUFFER using AZLyrics."
   (url-retrieve (lyrics-azlyrics-url artist song) #'lyrics-azlyrics-page-callback (list artist song buffer)))
@@ -308,8 +303,6 @@ Callback AZLyrics ARTIST SONG in BUFFER."
 
 
 ;;; MusixMatch
-(add-to-list 'lyrics-backends '("MusixMatch" . lyrics-musixmatch))
-
 (defun lyrics-musixmatch (artist song &optional buffer)
   "Process lyrics for ARTIST SONG in BUFFER using AZLyrics."
   (url-retrieve (lyrics-musixmatch-url artist song) #'lyrics-musixmatch-page-callback (list artist song buffer)))
