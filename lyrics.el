@@ -239,7 +239,7 @@ which are the arguments that `revert-buffer' received."
 
 ;;; Lyrics wiki
 (defun lyrics-lyricswiki (artist song &optional buffer)
-  "Process lyrics for ARTIST SONG in BUFFER."
+  "Process lyrics from LyricWiki <URL:http://lyrics.wikia.com/>."
   (let ((url (concat "http://lyrics.wikia.com/api.php"
                      "?fmt=xml"
                      "&action=lyrics"
@@ -248,9 +248,9 @@ which are the arguments that `revert-buffer' received."
     (url-retrieve url #'lyrics-lyricswiki-api-callback (list artist song buffer))))
 
 (defun lyrics-lyricswiki-api-callback (status artist song &optional buffer)
-  "Check if STATUS is erred.
+  "Callback for LyricWiki backend, check if STATUS is erred.
 
-Callback lyrics wiki ARTIST SONG in BUFFER."
+Receives ARTIST, SONG, and the BUFFER to show the lyrics."
   (if (plist-get status :error)
       (message (error-message-string (plist-get status :error)))
     (let* ((tree (lyrics-url-retrieve-parse-xml (current-buffer)))
@@ -273,7 +273,7 @@ Callback lyrics wiki ARTIST SONG in BUFFER."
 
 ;;; AZLyrics
 (defun lyrics-azlyrics (artist song &optional buffer)
-  "Process lyrics for ARTIST SONG in BUFFER using AZLyrics."
+  "Process lyrics from AZLyrics <URL:https://www.azlyrics.com/>."
   (url-retrieve (lyrics-azlyrics-url artist song) #'lyrics-azlyrics-page-callback (list artist song buffer)))
 
 (defun lyrics-azlyrics-url (artist song)
@@ -283,9 +283,9 @@ Callback lyrics wiki ARTIST SONG in BUFFER."
     (format "https://www.azlyrics.com/lyrics/%s/%s.html" (cleanup artist) (cleanup song))))
 
 (defun lyrics-azlyrics-page-callback (status artist song &optional buffer)
-  "Check if STATUS is erred.
+  "Callback for AZLyrics backend, check if STATUS is erred.
 
-Callback AZLyrics ARTIST SONG in BUFFER."
+Receives ARTIST, SONG, and the BUFFER to show the lyrics."
   (if-let (err (plist-get status :error))
       (if (= url-http-response-status 404)
           (signal 'lyrics-not-found (list artist song))
@@ -304,7 +304,7 @@ Callback AZLyrics ARTIST SONG in BUFFER."
 
 ;;; MusixMatch
 (defun lyrics-musixmatch (artist song &optional buffer)
-  "Process lyrics for ARTIST SONG in BUFFER using AZLyrics."
+  "Process lyrics from MusicMatch <URL:https://www.musixmatch.com/>."
   (url-retrieve (lyrics-musixmatch-url artist song) #'lyrics-musixmatch-page-callback (list artist song buffer)))
 
 (defun lyrics-musixmatch-url (artist song)
@@ -315,9 +315,9 @@ Callback AZLyrics ARTIST SONG in BUFFER."
     (format "https://www.musixmatch.com/lyrics/%s/%s" (cleanup artist) (cleanup song))))
 
 (defun lyrics-musixmatch-page-callback (status artist song &optional buffer)
-  "Check if STATUS is erred.
+  "Callback for MusicMatch backend, check if STATUS is erred.
 
-Callback AZLyrics ARTIST SONG in BUFFER."
+Receives ARTIST, SONG, and the BUFFER to show the lyrics."
   (if-let (err (plist-get status :error))
       (if (= url-http-response-status 404)
           (signal 'lyrics-not-found (list artist song))
