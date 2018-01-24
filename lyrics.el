@@ -280,7 +280,7 @@ Callback lyrics wiki ARTIST SONG in BUFFER."
   "Return an AZLyrics url for ARTIST SONG."
   (cl-labels ((cleanup (string)
                        (downcase (replace-regexp-in-string "[[:space:][:punct:]]+" "" string))))
-    (format "http://www.azlyrics.com/lyrics/%s/%s.html" (cleanup artist) (cleanup song))))
+    (format "https://www.azlyrics.com/lyrics/%s/%s.html" (cleanup artist) (cleanup song))))
 
 (defun lyrics-azlyrics-page-callback (status artist song &optional buffer)
   "Check if STATUS is erred.
