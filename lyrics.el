@@ -91,6 +91,13 @@ the lyrics."
                 (function :tag "Function"))
   :group 'lyrics)
 
+(defcustom lyrics-current-song-function nil
+  "Function to fetch the current playing song.
+
+Should return a list of the form: (ARTIST SONG)."
+  :type 'function
+  :group 'lyrics)
+
 (defface lyrics-face-song
   '((t :inherit font-lock-constant-face))
   "Face for song titles."
@@ -182,6 +189,17 @@ Similar to `dom-texts' but ignores `lyrics-node-tag-ignore' tags."
         (insert lyrics)
         (write-region nil nil (lyrics-cache-filename artist song) nil 0))
     (file-error (message (error-message-string err)))))
+
+(defun lyrics-read-current-song (&optional ask)
+  "Read the artist and song, is ASK is non nil will show a prompt."
+  (let (artist song)
+    (when (functionp lyrics-current-song-function)
+      (with-demoted-errors "Error while loading song/artist with `lyrics-current-song-function': %S"
+        (cl-multiple-value-setq (artist song) (funcall lyrics-current-song-function))))
+    (if (and (not ask) artist song)
+        (list artist song)
+      (list (read-string "Artist: " artist 'lyrics-artist-history)
+            (read-string "Song: " song 'lyrics-song-history)))))
 
 (defun lyrics-show (artist song lyrics &optional buffer save)
   "Show ARTIST SONG LYRICS in a BUFFER.
@@ -333,19 +351,13 @@ Receives ARTIST, SONG, and the BUFFER to show the lyrics."
 ;;;###autoload
 (defun lyrics-edit (artist song)
   "Edit ARTIST SONG LYRICS in `lyrics-directory'."
-  (interactive (if (and (not current-prefix-arg) lyrics-artist lyrics-song)
-                   (list lyrics-artist lyrics-song)
-                 (list (read-string "Artist: " lyrics-artist 'lyrics-artist-history)
-                       (read-string "Song: " lyrics-song 'lyrics-song-history))))
+  (interactive (lyrics-read-current-song current-prefix-arg))
   (find-file (lyrics-cache-filename artist song)))
 
 ;;;###autoload
 (defun lyrics (artist song &optional buffer)
   "Browse lyrics wiki from ARTIST SONG in BUFFER."
-  (interactive (if (and (not current-prefix-arg) lyrics-artist lyrics-song)
-                   (list lyrics-artist lyrics-song)
-                 (list (read-string "Artist: " lyrics-artist 'lyrics-artist-history)
-                       (read-string "Song: " lyrics-song 'lyrics-song-history))))
+  (interactive (lyrics-read-current-song current-prefix-arg))
   (and (called-interactively-p 'any)
        lyrics-normalize-title-p
        (functionp lyrics-normalize-function)
