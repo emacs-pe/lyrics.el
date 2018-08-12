@@ -62,20 +62,13 @@
 (defcustom lyrics-directory (expand-file-name "~/.lyrics")
   "Directory where to the lyrics will be stored.
 
-It defaults to `~/.lyrics' since other MPD clients \(e.g.  ncmpc\)
+It defaults to `~/.lyrics' since other MPD clients (e.g.  ncmpc)
 also use that location."
   :type '(directory :must-match t)
   :group 'lyrics)
 
-(defcustom lyrics-normalize-title-p t
-  "Whether to normalize lyrics.
-
-Normalization is only applied when `lyrics' is called interactively."
-  :type 'boolean
-  :group 'lyrics)
-
 (defcustom lyrics-normalize-function 'lyrics-capitalize
-  "Function used to normalize a lyrics artist and title."
+  "Function used to normalize lyrics filename."
   :type 'function
   :group 'lyrics)
 
@@ -83,8 +76,8 @@ Normalization is only applied when `lyrics' is called interactively."
   "Function used to get lyrics.
 
 This function should receive three parameters: Artist, Song,
-Buffer \(optional\), and ultimately call `lyrics-show' to show
-the lyrics."
+Buffer (optional), and ultimately call `lyrics-show' to show the
+lyrics."
   :type '(radio (function-item lyrics-azlyrics)
                 (function-item lyrics-lyricswiki)
                 (function-item lyrics-musixmatch)
@@ -358,11 +351,9 @@ Receives ARTIST, SONG, and the BUFFER to show the lyrics."
 (defun lyrics (artist song &optional buffer)
   "Browse lyrics wiki from ARTIST SONG in BUFFER."
   (interactive (lyrics-read-current-song current-prefix-arg))
-  (and (called-interactively-p 'any)
-       lyrics-normalize-title-p
-       (functionp lyrics-normalize-function)
-       (setq song (funcall lyrics-normalize-function song)
-             artist (funcall lyrics-normalize-function artist)))
+  (when (functionp lyrics-normalize-function)
+    (setq song (funcall lyrics-normalize-function song)
+          artist (funcall lyrics-normalize-function artist)))
   (if (file-exists-p (lyrics-cache-filename artist song))
       (let ((lyrics (with-temp-buffer
                       (insert-file-contents (lyrics-cache-filename artist song))
@@ -371,5 +362,4 @@ Receives ARTIST, SONG, and the BUFFER to show the lyrics."
     (funcall lyrics-backend artist song buffer)))
 
 (provide 'lyrics)
-
 ;;; lyrics.el ends here
