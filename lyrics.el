@@ -72,14 +72,13 @@ also use that location."
   :type 'function
   :group 'lyrics)
 
-(defcustom lyrics-backend 'lyrics-lyricswiki
+(defcustom lyrics-backend 'lyrics-azlyrics
   "Function used to get lyrics.
 
 This function should receive three parameters: Artist, Song,
 Buffer (optional), and ultimately call `lyrics-show' to show the
 lyrics."
   :type '(radio (function-item lyrics-azlyrics)
-                (function-item lyrics-lyricswiki)
                 (function-item lyrics-musixmatch)
                 (function :tag "Function"))
   :group 'lyrics)
@@ -246,40 +245,6 @@ which are the arguments that `revert-buffer' received."
         (list (default-value 'mode-line-buffer-identification)
               " {" 'lyrics-song " - " 'lyrics-artist "}"))
   (setq-local revert-buffer-function #'lyrics-show-revert-buffer))
-
-
-;;; Lyrics wiki
-(defun lyrics-lyricswiki (artist song &optional buffer)
-  "Process lyrics from LyricWiki <URL:http://lyrics.wikia.com/>."
-  (let ((url (concat "http://lyrics.wikia.com/api.php"
-                     "?fmt=xml"
-                     "&action=lyrics"
-                     "&song=" (url-hexify-string (replace-regexp-in-string " " "_" song))
-                     "&artist=" (url-hexify-string (replace-regexp-in-string " " "_" artist)))))
-    (url-retrieve url #'lyrics-lyricswiki-api-callback (list artist song buffer))))
-
-(defun lyrics-lyricswiki-api-callback (status artist song &optional buffer)
-  "Callback for LyricWiki backend, check if STATUS is erred.
-
-Receives ARTIST, SONG, and the BUFFER to show the lyrics."
-  (if (plist-get status :error)
-      (message (error-message-string (plist-get status :error)))
-    (let* ((tree (lyrics-url-retrieve-parse-xml (current-buffer)))
-           (lyrics (cadr (assoc-default 'lyrics (cddr tree))))
-           (lyrics-url (cadr (assoc-default 'url (cddr tree)))))
-      (if (string= lyrics "Not found")
-          (signal 'lyrics-not-found (list artist song))
-        (lyrics-lyricswiki-extract lyrics-url artist song buffer)))))
-
-(defun lyrics-lyricswiki-extract (url artist song &optional buffer)
-  "Display lyrics lyrics-wiki URL ARTIST SONG in BUFFER."
-  (url-retrieve url (lambda (status)
-                      (if (plist-get status :error)
-                          (message (error-message-string (plist-get status :error)))
-                        (let* ((dom (lyrics-url-retrieve-parse-html (current-buffer)))
-                               (node (dom-by-class dom "lyricbox"))
-                               (lyrics (string-trim (lyrics-clean-blank-lines (lyrics-node-texts node "\n")))))
-                          (lyrics-show artist song lyrics buffer 'save))))))
 
 
 ;;; AZLyrics
